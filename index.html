@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Love</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Itim&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+
+<style>
+body{
+  margin:0;
+  overflow:hidden;
+  background:black;
+  font-family:'Itim',cursive;
+}
+
+canvas{
+  position:absolute;
+}
+
+#message{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:85%;
+  text-align:center;
+  color:white;
+  font-size:22px;
+  line-height:1.7;
+  opacity:0;
+  transition:2s;
+  text-shadow:0 0 15px #ff9adf;
+}
+
+#loveText{
+  position:absolute;
+  bottom:-120px;
+  width:100%;
+  text-align:center;
+  font-size:42px;
+  color:#ffd1f3;
+  font-family:'Dancing Script',cursive;
+  opacity:0;
+  text-shadow:0 0 25px #ff7ad9;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="bg"></canvas>
+<canvas id="heart"></canvas>
+
+<!-- 🎵 ใส่เพลง -->
+<audio id="music" src="rakrakrak.mp3"></audio>
+
+<div id="message">
+เค้ารักพอใจนะคะเค้ารู้ว่าบางครั้งเค้าทำตัวแย่เค้าขอโทษนะคะแต่เค้าไม่ได้ตั้งใจจริงๆ
+ในบางเรื่องที่พอใจไม่โอเคเค้าจะคอยปรับให้นะเค้าอยากอยู่กับพอใจนานๆนานมากๆไปจนแก่เลย
+เค้ารักพอใจนะคะรักมากๆเลย 💗
+</div>
+
+<div id="loveText">Khao rak Porjai 💗</div>
+
+<script>
+const bg=document.getElementById("bg");
+const heartCanvas=document.getElementById("heart");
+const music=document.getElementById("music");
+
+const bctx=bg.getContext("2d");
+const hctx=heartCanvas.getContext("2d");
+
+bg.width=heartCanvas.width=window.innerWidth;
+bg.height=heartCanvas.height=window.innerHeight;
+
+let stars=[];
+let hearts=[];
+let meteors=[];
+let tapCount=0;
+
+/* ⭐ ดาวพื้นหลัง */
+for(let i=0;i<120;i++){
+  stars.push({
+    x:Math.random()*bg.width,
+    y:Math.random()*bg.height,
+    r:Math.random()*2
+  });
+}
+
+function drawStars(){
+  bctx.clearRect(0,0,bg.width,bg.height);
+
+  stars.forEach(s=>{
+    bctx.globalAlpha=Math.random();
+    bctx.fillStyle="white";
+    bctx.beginPath();
+    bctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    bctx.fill();
+  });
+}
+
+/* ⭐ ดาวตก */
+function createMeteor(){
+  meteors.push({
+    x:Math.random()*bg.width,
+    y:0,
+    vx:6,
+    vy:6
+  });
+}
+
+function drawMeteor(){
+  meteors.forEach(m=>{
+    bctx.strokeStyle="white";
+    bctx.lineWidth=2;
+    bctx.beginPath();
+    bctx.moveTo(m.x,m.y);
+    bctx.lineTo(m.x-30,m.y-30);
+    bctx.stroke();
+
+    m.x+=m.vx;
+    m.y+=m.vy;
+  });
+}
+
+/* 💗 หัวใจ */
+function drawHeart(x,y,size){
+  hctx.save();
+  hctx.translate(x,y);
+
+  hctx.shadowBlur=25;
+  hctx.shadowColor="#ff7ad9";
+
+  let grad=hctx.createRadialGradient(0,0,5,0,0,size);
+  grad.addColorStop(0,"#ffffff");
+  grad.addColorStop(1,"#ff6ec7");
+
+  hctx.fillStyle=grad;
+
+  hctx.beginPath();
+  hctx.moveTo(0,-size/2);
+  hctx.bezierCurveTo(size,-size,size,size/3,0,size);
+  hctx.bezierCurveTo(-size,size/3,-size,-size,0,-size/2);
+  hctx.fill();
+
+  hctx.restore();
+}
+
+function addHeart(x,y){
+  hearts.push({
+    x:x,
+    y:y,
+    size:20+Math.random()*25,
+    vy:0.8
+  });
+
+  tapCount++;
+  if(tapCount===10) showMessage();
+}
+
+heartCanvas.onclick=e=>addHeart(e.clientX,e.clientY);
+heartCanvas.ontouchstart=e=>{
+  const t=e.touches[0];
+  addHeart(t.clientX,t.clientY);
+};
+
+/* 💌 แสดงข้อความ + เพลง */
+function showMessage(){
+
+  document.getElementById("message").style.opacity=1;
+
+  createMeteor();
+  setTimeout(createMeteor,400);
+
+  // 🎵 เล่นเพลงหลังข้อความขึ้น
+  setTimeout(()=>{
+    music.play();
+  },1500);
+
+  // ลอยข้อความรัก
+  setTimeout(()=>{
+    const love=document.getElementById("loveText");
+    love.style.opacity=1;
+
+    let pos=-120;
+    function floatUp(){
+      pos+=1;
+      love.style.bottom=pos+"px";
+      if(pos<120) requestAnimationFrame(floatUp);
+    }
+    floatUp();
+
+  },4000);
+}
+
+/* animation */
+function animate(){
+
+  drawStars();
+  drawMeteor();
+
+  hctx.clearRect(0,0,heartCanvas.width,heartCanvas.height);
+
+  hearts.forEach(h=>{
+    h.y-=h.vy;
+    drawHeart(h.x,h.y,h.size);
+  });
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+
+</body>
+</html>
